@@ -1,0 +1,3 @@
+streamlit==1.24.0
+-U google-generativeai
+Pillow==10.0.0
