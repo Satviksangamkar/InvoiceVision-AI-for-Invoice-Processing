@@ -3,15 +3,21 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 from io import BytesIO
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
+
+# Access the API key
+api_key = os.getenv('API_KEY')
 # Configure Gemini API
-genai.configure(api_key=" ")
+genai.configure(api_key=os.getenv('API_KEY'))
 
 # Streamlit Interface Setup
 st.set_page_config(page_title="Gemini Application")
 
 # Header
-st.header("Gemini Application - Analyze an Image")
+st.header("Insights of Bills and Invoices")
 
 # Text input for user prompt
 input_text = st.text_input("Enter your prompt:")
@@ -23,13 +29,14 @@ uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png
 def input_image_setup(uploaded_file):
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
+
+        # Convert image to RGB if it's not already in a JPEG-compatible mode
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+
         # Convert image to byte array to pass to the Gemini model
         byte_array = BytesIO()
-        
-        # Save the image in its original format (remove hardcoded JPEG)
-        image_format = uploaded_file.type.split("/")[-1].upper()  # Get the format (e.g., PNG, JPEG)
-        image.save(byte_array, format=image_format)
-        
+        image.save(byte_array, format="JPEG")
         byte_array = byte_array.getvalue()
         image_data = [{"mime_type": uploaded_file.type, "data": byte_array}]
         return image, image_data
@@ -42,18 +49,19 @@ if uploaded_file is not None:
 
 # Define input prompt for the AI task
 input_prompt = """
-            You are an expert in analyzing invoices.
-            You will receive images of invoices, and your task is to extract relevant information such as:
-            - Invoice Number
-            - Date of Issue
-            - Due Date
-            - Billing and Shipping Addresses
-            - Total Amount Due
-            - Tax Details
-            - Itemized List of Products/Services with their respective quantities and prices.
+            Please analyze the information from the invoice in the provided image and extract the following details:
 
-            Please extract and provide the relevant data from the invoice image and answer any specific questions based on the input image.
-            """
+1. Invoice number
+2. Invoice date
+3. Due date
+4. Company name and address
+5. Billing address
+6. Total amount
+7. Tax amount
+8. List of purchased items, including quantity, unit price, and total price per item
+
+Summarize this information in a structured format.
+"""
 
 # If the submit button is clicked
 if st.button("Tell me about the image"):
